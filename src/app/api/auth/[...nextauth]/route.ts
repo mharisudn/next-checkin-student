@@ -1,8 +1,10 @@
-import NextAuth from 'next-auth';
+import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { JWT } from 'next-auth/jwt';
+import { Session } from 'next-auth';
 import supabase from '@/src/lib/db';
 
-const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Email Only',
@@ -29,9 +31,20 @@ const authOptions = {
       },
     }),
   ],
-
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({
+  token,
+  user,
+}: {
+  token: JWT;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+}) {
+
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -39,30 +52,25 @@ const authOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.name = token.name;
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.name = token.name as string;
       }
       return session;
     },
   },
-
   pages: {
     signIn: '/auth/signin',
     error: '/auth/signin',
   },
-
   session: {
     strategy: 'jwt',
   },
-
   secret: process.env.NEXTAUTH_SECRET || 'fallback-secret',
-
   debug: process.env.NODE_ENV === 'development',
 };
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };
