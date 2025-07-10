@@ -1,8 +1,6 @@
 import supabase from '@/src/lib/db';
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { JWT } from 'next-auth/jwt';
-import { Session } from 'next-auth';
 
 // Extend the built-in session types
 declare module 'next-auth' {
