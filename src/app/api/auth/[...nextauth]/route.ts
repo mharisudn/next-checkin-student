@@ -1,31 +1,14 @@
 import supabase from '@/src/lib/db';
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { Session, User } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
 
-// Extend the built-in session types
-declare module 'next-auth' {
-  interface Session {
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      role: string;
-    };
-  }
-
-  interface User {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-  }
-}
-
-declare module 'next-auth/jwt' {
-  interface JWT {
-    id: string;
-    role: string;
-  }
+interface SupabaseUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string; // e.g. "PETUGAS" / "PANITIA"
 }
 
 const authOptions: NextAuthOptions = {
@@ -35,7 +18,7 @@ const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: 'Email', type: 'email' },
       },
-      async authorize(credentials) {
+      async authorize(credentials): Promise<User | null> {
         if (!credentials?.email) return null;
 
         const { data: user, error } = await supabase
@@ -46,18 +29,26 @@ const authOptions: NextAuthOptions = {
 
         if (error || !user) return null;
 
+        const typedUser: SupabaseUser = user;
+
         return {
-          id: user.id.toString(),
-          email: user.email,
-          name: user.name,
-          role: user.role, // e.g. "PETUGAS" / "PANITIA"
+          id: typedUser.id,
+          email: typedUser.email,
+          name: typedUser.name,
+          role: typedUser.role,
         };
       },
     }),
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({
+      token,
+      user,
+    }: {
+      token: JWT;
+      user?: User & { id: string; role: string };
+    }): Promise<JWT> {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -65,10 +56,16 @@ const authOptions: NextAuthOptions = {
       return token;
     },
 
-    async session({ session, token }) {
-      if (session?.user) {
-        session.user.id = token.id;
-        session.user.role = token.role; // ini yang penting
+    async session({
+      session,
+      token,
+    }: {
+      session: Session;
+      token: JWT & { id?: string; role?: string };
+    }): Promise<Session> {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       return session;
     },
@@ -79,7 +76,7 @@ const authOptions: NextAuthOptions = {
   },
 
   session: {
-    strategy: 'jwt' as const,
+    strategy: 'jwt',
   },
 
   secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-development',
