@@ -59,7 +59,7 @@ const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: any }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -67,7 +67,7 @@ const authOptions: NextAuthOptions = {
       return token;
     },
 
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.id;
         session.user.role = token.role; // ini yang penting
