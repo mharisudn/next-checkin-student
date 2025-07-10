@@ -1,0 +1,14 @@
+export enum StudentStatus {
+  BELUM_DATANG = 'BELUM_DATANG',
+  DATANG = 'DATANG',
+  VERIFIKASI = 'VERIFIKASI',
+  KARTU = 'KARTU',
+  PENGARAHAN_AIIS = 'PENGARAHAN_AIIS',
+  WAWANCARA = 'WAWANCARA',
+  SELESAI = 'SELESAI',
+}
+
+export enum UserRole {
+  PETUGAS = 'PETUGAS',
+  PANITIA = 'PANITIA',
+}
